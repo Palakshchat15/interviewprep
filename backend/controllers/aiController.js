@@ -3,7 +3,7 @@ const {
   conceptExplainPrompt,
   questionAnswerPrompt,
 } = require("../utils/prompts");
-console.log("GEMINI KEY:", process.env.GEMINI_API_KEY); // 🔒 remove after testing
+
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
