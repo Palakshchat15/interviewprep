@@ -21,7 +21,7 @@ const generateInterviewQuestions = async (req, res) => {
     // 1. Get the specific generative model
     // Note: I'm using "gemini-1.5-flash", a standard and efficient model.
     // You can change this to another model if you prefer.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const prompt = questionAnswerPrompt(
       role,
@@ -68,7 +68,7 @@ const generateConceptExplanation = async (req, res) => {
     }
     
     // 1. Get the specific generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const prompt = conceptExplainPrompt(question);
 
