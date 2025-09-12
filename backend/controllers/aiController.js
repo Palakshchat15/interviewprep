@@ -1,11 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/genai");
+const { GoogleGenAI } = require("@google/genai");
 const {
   conceptExplainPrompt,
   questionAnswerPrompt,
 } = require("../utils/prompts");
 
-// Initialize the GenAI client with your API key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // @desc    Generate interview questions and answers using Gemini
 // @route   POST /api/ai/generate-questions
@@ -18,11 +18,6 @@ const generateInterviewQuestions = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // 1. Get the specific generative model
-    // Note: I'm using "gemini-1.5-flash", a standard and efficient model.
-    // You can change this to another model if you prefer.
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-
     const prompt = questionAnswerPrompt(
       role,
       experience,
@@ -30,25 +25,24 @@ const generateInterviewQuestions = async (req, res) => {
       numberOfQuestions
     );
 
-    // 2. Call generateContent with the prompt
-    const result = await model.generateContent(prompt);
-    const response = result.response;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite",
+      contents: prompt,
+    });
 
-    // 3. Get the text response using the .text() function
-    const rawText = response.text();
+    let rawText = response.text;
 
-    // Clean the text to ensure it's valid JSON
+    // Clean it: Remove ```json and ``` from beginning and end
     const cleanedText = rawText
       .replace(/^```json\s*/, "") // remove starting ```json
       .replace(/```$/, "") // remove ending ```
       .trim(); // remove extra spaces
 
-    // Now it's safe to parse
+    // Now safe to parse
     const data = JSON.parse(cleanedText);
 
     res.status(200).json(data);
   } catch (error) {
-    console.error("AI Generation Error:", error); // Log the actual error for debugging
     res.status(500).json({
       message: "Failed to generate questions",
       error: error.message,
@@ -56,7 +50,7 @@ const generateInterviewQuestions = async (req, res) => {
   }
 };
 
-// @desc    Generate an explanation for an interview question
+// @desc    Generate explains a interview question
 // @route   POST /api/ai/generate-explanation
 // @access  Private
 const generateConceptExplanation = async (req, res) => {
@@ -66,33 +60,29 @@ const generateConceptExplanation = async (req, res) => {
     if (!question) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    
-    // 1. Get the specific generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const prompt = conceptExplainPrompt(question);
 
-    // 2. Call generateContent with the prompt
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    
-    // 3. Get the text response using the .text() function
-    const rawText = response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite",
+      contents: prompt,
+    });
 
-    // Clean the text to ensure it's valid JSON
+    let rawText = response.text;
+
+    // Clean it: Remove ```json and ``` from beginning and end
     const cleanedText = rawText
       .replace(/^```json\s*/, "") // remove starting ```json
       .replace(/```$/, "") // remove ending ```
       .trim(); // remove extra spaces
 
-    // Now it's safe to parse
+    // Now safe to parse
     const data = JSON.parse(cleanedText);
 
     res.status(200).json(data);
   } catch (error) {
-    console.error("AI Explanation Error:", error); // Log the actual error for debugging
     res.status(500).json({
-      message: "Failed to generate explanation", // More specific message
+      message: "Failed to generate questions",
       error: error.message,
     });
   }
