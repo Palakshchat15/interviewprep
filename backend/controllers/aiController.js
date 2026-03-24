@@ -11,11 +11,32 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Robust JSON extractor - handles any markdown wrapping from Gemini
 function extractJSON(text) {
-  // Try to find a JSON array or object in the text
-  const match = text.match(/(\[\s*\{[\s\S]*\}\s*\]|\{[\s\S]*\})/); 
-  if (match) return match[0];
-  // Fallback: strip all markdown fences
-  return text.replace(/^```[\w]*\s*/m, "").replace(/```\s*$/m, "").trim();
+  const match = text.match(/(\[\s*\{[\s\S]*\}\s*\]|\{[\s\S]*\})/);
+  const raw = match ? match[0] : text.replace(/^```[\w]*\s*/m, "").replace(/```\s*$/m, "").trim();
+  return repairJSON(raw);
+}
+
+// Repairs JSON strings that contain literal control characters (newlines, tabs, etc.)
+// Gemini sometimes returns explanation text with actual \n chars inside JSON strings
+function repairJSON(text) {
+  let inString = false;
+  let escaped = false;
+  let result = "";
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const code = char.charCodeAt(0);
+    if (escaped) { escaped = false; result += char; continue; }
+    if (char === "\\" && inString) { escaped = true; result += char; continue; }
+    if (char === '"') { inString = !inString; result += char; continue; }
+    if (inString) {
+      if (char === "\n") { result += "\\n"; continue; }
+      if (char === "\r") { result += "\\r"; continue; }
+      if (char === "\t") { result += "\\t"; continue; }
+      if (code < 32) continue; // strip other bad control chars
+    }
+    result += char;
+  }
+  return result;
 }
 
 // @desc    Generate interview questions and answers using Gemini
@@ -29,15 +50,9 @@ const generateInterviewQuestions = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
     
-    // FIX 2: Use a valid, stable model name
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const prompt = questionAnswerPrompt(
-      role,
-      experience,
-      topicsToFocus,
-      numberOfQuestions
-    );
+    const prompt = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -51,10 +66,7 @@ const generateInterviewQuestions = async (req, res) => {
   } catch (error) {
     console.error("Error in generateInterviewQuestions:", error.message);
     console.error("Full error:", error);
-    res.status(500).json({
-      message: "Failed to generate questions",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to generate questions", error: error.message });
   }
 };
 
@@ -85,10 +97,7 @@ const generateConceptExplanation = async (req, res) => {
   } catch (error) {
     console.error("Error in generateConceptExplanation:", error.message);
     console.error("Full error:", error);
-    res.status(500).json({
-      message: "Failed to generate explanation",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to generate explanation", error: error.message });
   }
 };
 
