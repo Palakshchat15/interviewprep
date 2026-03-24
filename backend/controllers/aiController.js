@@ -20,7 +20,7 @@ const generateInterviewQuestions = async (req, res) => {
     }
     
     // FIX 2: Use a valid, stable model name
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = questionAnswerPrompt(
       role,
@@ -66,7 +66,7 @@ const generateConceptExplanation = async (req, res) => {
     }
 
     // Apply the same fixes here
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = conceptExplainPrompt(question);
 
