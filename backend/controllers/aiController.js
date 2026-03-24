@@ -30,7 +30,7 @@ const generateInterviewQuestions = async (req, res) => {
     }
     
     // FIX 2: Use a valid, stable model name
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = questionAnswerPrompt(
       role,
@@ -69,7 +69,7 @@ const generateConceptExplanation = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = conceptExplainPrompt(question);
 
